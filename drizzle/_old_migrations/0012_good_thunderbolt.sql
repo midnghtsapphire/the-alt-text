@@ -1,0 +1,1 @@
+ALTER TABLE `partners` MODIFY COLUMN `partnerType` enum('manufacturer','training_provider','grant_provider','certification_body','industry_org','security_training','phishing_simulation','compliance_platform','software_vendor','apprenticeship_program') NOT NULL;

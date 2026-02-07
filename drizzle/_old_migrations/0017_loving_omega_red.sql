@@ -1,0 +1,1 @@
+ALTER TABLE `securityHabits` MODIFY COLUMN `badges` text;

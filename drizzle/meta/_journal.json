@@ -1,0 +1,202 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1769224873301,
+      "tag": "0000_empty_dark_phoenix",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1769225011906,
+      "tag": "0001_luxuriant_stephen_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1769229602367,
+      "tag": "0002_useful_victor_mancha",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1769236730612,
+      "tag": "0003_melodic_norman_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1769522791741,
+      "tag": "0004_sleepy_titanium_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1769529695980,
+      "tag": "0005_fine_scalphunter",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1769530329546,
+      "tag": "0006_confused_captain_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1769535380557,
+      "tag": "0007_needy_grim_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1769540510459,
+      "tag": "0008_last_lord_tyger",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1769542495688,
+      "tag": "0009_mute_the_initiative",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1769546131526,
+      "tag": "0010_closed_mongu",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1769562770657,
+      "tag": "0011_great_the_watchers",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1769564708433,
+      "tag": "0012_good_thunderbolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1769642856115,
+      "tag": "0013_broad_retro_girl",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1769644252177,
+      "tag": "0014_cheerful_pestilence",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1769649985545,
+      "tag": "0015_lush_shadowcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1769655033239,
+      "tag": "0016_aspiring_roughhouse",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1769655064510,
+      "tag": "0017_loving_omega_red",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1769656878863,
+      "tag": "0018_add_module_06_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1769697213019,
+      "tag": "0019_lush_otto_octavius",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1769697497894,
+      "tag": "0020_glorious_sentry",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1769700049996,
+      "tag": "0021_black_multiple_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1769700750355,
+      "tag": "0022_solid_hellfire_club",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1769701054815,
+      "tag": "0023_numerous_eternals",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1769706345955,
+      "tag": "0024_vengeful_blindfold",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1769721236579,
+      "tag": "0025_neat_revanche",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1769722388855,
+      "tag": "0026_tense_thunderbolt_ross",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1769738265525,
+      "tag": "0027_lethal_madelyne_pryor",
+      "breakpoints": true
+    }
+  ]
+}

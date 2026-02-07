@@ -1,0 +1,255 @@
+/**
+ * Quiz-to-Campaign API - Simplified tRPC Router
+ * 
+ * Integrates Universal API Stack Quiz-to-Campaign module into Tool & Die Hub
+ * Build Once, Use Everywhere - Same API + Different Problem = New App
+ */
+
+import { z } from 'zod';
+import { publicProcedure, protectedProcedure, router } from '../_core/trpc';
+import { TRPCError } from '@trpc/server';
+import { getDb } from '../db';
+import { 
+  quizConfigs, 
+  quizResponses, 
+  quizResults,
+  affiliateLinks,
+  campaigns,
+  campaignEvents 
+} from '../../drizzle/schema';
+import { eq, desc } from 'drizzle-orm';
+import { invokeLLM } from '../_core/llm';
+
+/**
+ * Quiz-to-Campaign Router
+ */
+export const quizCampaignRouter = router({
+  /**
+   * Submit quiz response with AI analysis
+   * This is the main endpoint that powers the career assessment
+   */
+  submitAssessment: publicProcedure
+    .input(z.object({
+      answers: z.array(z.object({
+        questionId: z.string(),
+        value: z.string()
+      })),
+      email: z.string().email().optional(),
+      utmSource: z.string().optional(),
+      utmMedium: z.string().optional(),
+      utmCampaign: z.string().optional()
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Database unavailable'
+        });
+      }
+
+      // Generate response ID
+      const responseId = `resp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+      // Prepare data for AI analysis
+      const answersText = input.answers.map(answer => {
+        return `Q: Question ${answer.questionId}\nA: ${answer.value}`;
+      }).join('\n\n');
+
+      // Get AI insights using OpenRouter
+      let aiInsights = null;
+      try {
+        const aiResponse = await invokeLLM({
+          messages: [
+            {
+              role: 'system',
+              content: `You are a career counselor analyzing quiz responses. Provide personalized career insights including:
+1. Top 3 career matches with confidence scores (90%, 85%, 80%)
+2. Transferable skills for each career
+3. Salary ranges
+4. Next steps for each career path
+
+Return your response as JSON with this structure:
+{
+  "summary": "Brief overall summary",
+  "topMatches": [
+    {
+      "title": "Career title",
+      "description": "Why this is a good match",
+      "confidenceScore": 90,
+      "salaryRange": "$XX,XXX - $XX,XXX",
+      "transferableSkills": ["skill1", "skill2", "skill3"],
+      "nextSteps": ["step1", "step2", "step3"]
+    }
+  ],
+  "strengths": ["strength1", "strength2"],
+  "areasForImprovement": ["area1", "area2"],
+  "personalizedAdvice": "Detailed personalized advice"
+}`
+            },
+            {
+              role: 'user',
+              content: `Analyze these quiz responses and provide career guidance:\n\n${answersText}`
+            }
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'career_analysis',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  summary: { type: 'string' },
+                  topMatches: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        title: { type: 'string' },
+                        description: { type: 'string' },
+                        confidenceScore: { type: 'number' },
+                        salaryRange: { type: 'string' },
+                        transferableSkills: {
+                          type: 'array',
+                          items: { type: 'string' }
+                        },
+                        nextSteps: {
+                          type: 'array',
+                          items: { type: 'string' }
+                        }
+                      },
+                      required: ['title', 'description', 'confidenceScore', 'salaryRange', 'transferableSkills', 'nextSteps'],
+                      additionalProperties: false
+                    }
+                  },
+                  strengths: {
+                    type: 'array',
+                    items: { type: 'string' }
+                  },
+                  areasForImprovement: {
+                    type: 'array',
+                    items: { type: 'string' }
+                  },
+                  personalizedAdvice: { type: 'string' }
+                },
+                required: ['summary', 'topMatches', 'strengths', 'areasForImprovement', 'personalizedAdvice'],
+                additionalProperties: false
+              }
+            }
+          }
+        });
+
+        const content = aiResponse.choices[0]?.message?.content;
+        if (content && typeof content === 'string') {
+          aiInsights = JSON.parse(content);
+        }
+      } catch (error) {
+        console.error('AI analysis failed:', error);
+        // Continue without AI insights
+      }
+
+      // Store quiz response
+      await db.insert(quizResponses).values({
+        id: responseId,
+        quizId: 'career_assessment',
+        answers: input.answers,
+        leadInfo: input.email ? { email: input.email } : null,
+        score: 85, // Default score
+        startedAt: new Date(),
+        completedAt: new Date(),
+        createdAt: new Date()
+      });
+
+      // Store quiz result
+      const resultId = `result_${Date.now()}`;
+      await db.insert(quizResults).values({
+        id: resultId,
+        responseId: responseId,
+        quizId: 'career_assessment',
+        score: 85,
+        aiInsights: aiInsights,
+        createdAt: new Date()
+      });
+
+      // Generate affiliate link for Tool & Die training
+      const trackingCode = `${responseId.substring(0, 12)}`;
+      const affiliateUrl = `https://tool-die-hub.com/training?utm_source=${input.utmSource || 'quiz'}&utm_medium=${input.utmMedium || 'assessment'}&utm_campaign=${input.utmCampaign || 'career'}&utm_content=result&utm_term=${trackingCode}&ref=assessment&aff=${trackingCode}`;
+
+      const affiliateRecommendations = [{
+        productId: 'tool_die_training',
+        productName: 'Tool & Die Mastery Course',
+        description: 'Comprehensive training for modern tool and die makers',
+        affiliateUrl,
+        commissionRate: 0.40,
+        relevanceScore: 95,
+        reason: 'Based on your assessment results, this training aligns with your career goals'
+      }];
+
+      // Store affiliate link
+      await db.insert(affiliateLinks).values({
+        id: `aff_${trackingCode}`,
+        productId: 'tool_die_training',
+        affiliateUrl,
+        trackingCode,
+        campaign: input.utmCampaign || 'career_assessment',
+        medium: input.utmMedium || 'quiz',
+        source: input.utmSource || 'assessment',
+        clicks: 0,
+        conversions: 0,
+        revenue: '0.00',
+        createdAt: new Date()
+      });
+
+      return {
+        success: true,
+        data: {
+          responseId,
+          result: {
+            aiInsights,
+            affiliateRecommendations
+          }
+        }
+      };
+    }),
+
+  /**
+   * Track affiliate link click
+   */
+  trackClick: publicProcedure
+    .input(z.object({
+      linkId: z.string()
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Database unavailable'
+        });
+      }
+
+      // Get current link
+      const [link] = await db
+        .select()
+        .from(affiliateLinks)
+        .where(eq(affiliateLinks.id, input.linkId))
+        .limit(1);
+
+      if (link) {
+        // Increment click count
+        await db
+          .update(affiliateLinks)
+          .set({ 
+            clicks: (link.clicks || 0) + 1,
+            updatedAt: new Date()
+          })
+          .where(eq(affiliateLinks.id, input.linkId));
+      }
+
+      return {
+        success: true,
+        data: { tracked: true }
+      };
+    })
+});

@@ -1,0 +1,515 @@
+import { z } from "zod";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { getDb } from "./db";
+import { 
+  advertisingAffiliates, 
+  advertisingAffiliateClicks, 
+  advertisingAffiliateCommissions,
+  adCampaigns,
+  ads,
+  landingPages,
+  emailCampaigns,
+  domainSales 
+} from "../drizzle/schema";
+import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+
+/**
+ * Generate unique affiliate code
+ */
+function generateAffiliateCode(name: string): string {
+  const cleanName = name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6);
+  const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `${cleanName}${randomSuffix}`;
+}
+
+/**
+ * Generate referral link with affiliate code
+ */
+function generateReferralLink(affiliateCode: string, baseUrl: string = "https://thealttext.com"): string {
+  return `${baseUrl}?ref=${affiliateCode}`;
+}
+
+export const advertisingRouter = router({
+  // ============================================================================
+  // AFFILIATE API
+  // ============================================================================
+  
+  /**
+   * Register new affiliate
+   */
+  registerAffiliate: publicProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      email: z.string().email(),
+      company: z.string().optional(),
+      paypalEmail: z.string().email().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      // Check if email already exists
+      const existing = await db.select().from(advertisingAffiliates).where(eq(advertisingAffiliates.email, input.email)).limit(1);
+      if (existing.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Email already registered as affiliate",
+        });
+      }
+
+      // Generate unique affiliate code
+      const affiliateCode = generateAffiliateCode(input.name);
+      const referralLink = generateReferralLink(affiliateCode);
+
+      // Create affiliate
+      const [affiliate] = await db.insert(advertisingAffiliates).values({
+        name: input.name,
+        email: input.email,
+        company: input.company,
+        affiliateCode,
+        referralLink,
+        paypalEmail: input.paypalEmail,
+        status: "pending",
+      });
+
+      return {
+        success: true,
+        affiliate: {
+          id: affiliate.insertId,
+          affiliateCode,
+          referralLink,
+          status: "pending",
+        },
+      };
+    }),
+
+  /**
+   * Get affiliate by code (for tracking clicks)
+   */
+  getAffiliateByCode: publicProcedure
+    .input(z.object({
+      code: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const [affiliate] = await db
+        .select()
+        .from(advertisingAffiliates)
+        .where(eq(advertisingAffiliates.affiliateCode, input.code))
+        .limit(1);
+
+      if (!affiliate) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Affiliate not found",
+        });
+      }
+
+      return affiliate;
+    }),
+
+  /**
+   * Track affiliate click
+   */
+  trackClick: publicProcedure
+    .input(z.object({
+      affiliateCode: z.string(),
+      ipAddress: z.string().optional(),
+      userAgent: z.string().optional(),
+      referrer: z.string().optional(),
+      landingPage: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      // Get affiliate ID
+      const [affiliate] = await db
+        .select()
+        .from(advertisingAffiliates)
+        .where(eq(advertisingAffiliates.affiliateCode, input.affiliateCode))
+        .limit(1);
+
+      if (!affiliate) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Affiliate not found",
+        });
+      }
+
+      // Track click
+      await db.insert(advertisingAffiliateClicks).values({
+        affiliateId: affiliate.id,
+        ipAddress: input.ipAddress,
+        userAgent: input.userAgent,
+        referrer: input.referrer,
+        landingPage: input.landingPage,
+        converted: 0,
+      });
+
+      return { success: true };
+    }),
+
+  /**
+   * Track conversion (subscription or domain sale)
+   */
+  trackConversion: protectedProcedure
+    .input(z.object({
+      affiliateCode: z.string(),
+      type: z.enum(["subscription", "domain_sale", "one_time"]),
+      amount: z.number(),
+      sourceId: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      // Get affiliate
+      const [affiliate] = await db
+        .select()
+        .from(advertisingAffiliates)
+        .where(eq(advertisingAffiliates.affiliateCode, input.affiliateCode))
+        .limit(1);
+
+      if (!affiliate) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Affiliate not found",
+        });
+      }
+
+      // Calculate commission
+      const rate = input.type === "domain_sale" 
+        ? parseFloat(affiliate.domainCommissionRate) 
+        : parseFloat(affiliate.commissionRate);
+      const commissionAmount = input.amount * rate;
+
+      // Create commission record
+      await db.insert(advertisingAffiliateCommissions).values({
+        affiliateId: affiliate.id,
+        type: input.type,
+        amount: commissionAmount.toString(),
+        rate: rate.toString(),
+        sourceId: input.sourceId,
+        sourceType: input.type === "domain_sale" ? "domain" : "subscription",
+        status: "pending",
+      });
+
+      return {
+        success: true,
+        commission: commissionAmount,
+      };
+    }),
+
+  /**
+   * Get affiliate dashboard stats
+   */
+  getAffiliateDashboard: protectedProcedure
+    .input(z.object({
+      affiliateId: z.number(),
+    }))
+    .query(async ({ input }) => {
+      // Get affiliate
+      const [affiliate] = await db
+        .select()
+        .from(advertisingAffiliates)
+        .where(eq(advertisingAffiliates.id, input.affiliateId))
+        .limit(1);
+
+      if (!affiliate) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Affiliate not found",
+        });
+      }
+
+      // Get total clicks
+      const [clicksResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(advertisingAffiliateClicks)
+        .where(eq(advertisingAffiliateClicks.affiliateId, input.affiliateId));
+      const totalClicks = clicksResult?.count || 0;
+
+      // Get conversions
+      const [conversionsResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(advertisingAffiliateClicks)
+        .where(
+          and(
+            eq(advertisingAffiliateClicks.affiliateId, input.affiliateId),
+            eq(advertisingAffiliateClicks.converted, 1)
+          )
+        );
+      const totalConversions = conversionsResult?.count || 0;
+
+      // Get total earnings
+      const [earningsResult] = await db
+        .select({ total: sql<number>`SUM(amount)` })
+        .from(advertisingAffiliateCommissions)
+        .where(eq(advertisingAffiliateCommissions.affiliateId, input.affiliateId));
+      const totalEarnings = earningsResult?.total || 0;
+
+      // Get pending earnings
+      const [pendingResult] = await db
+        .select({ total: sql<number>`SUM(amount)` })
+        .from(advertisingAffiliateCommissions)
+        .where(
+          and(
+            eq(advertisingAffiliateCommissions.affiliateId, input.affiliateId),
+            eq(advertisingAffiliateCommissions.status, "pending")
+          )
+        );
+      const pendingEarnings = pendingResult?.total || 0;
+
+      // Get recent commissions
+      const recentCommissions = await db
+        .select()
+        .from(advertisingAffiliateCommissions)
+        .where(eq(advertisingAffiliateCommissions.affiliateId, input.affiliateId))
+        .orderBy(desc(advertisingAffiliateCommissions.createdAt))
+        .limit(10);
+
+      return {
+        affiliate,
+        stats: {
+          totalClicks,
+          totalConversions,
+          conversionRate: totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0,
+          totalEarnings,
+          pendingEarnings,
+        },
+        recentCommissions,
+      };
+    }),
+
+  /**
+   * List all affiliates (admin only)
+   */
+  listAffiliates: protectedProcedure
+    .input(z.object({
+      status: z.enum(["pending", "active", "suspended"]).optional(),
+      limit: z.number().default(50),
+      offset: z.number().default(0),
+    }))
+    .query(async ({ input, ctx }) => {
+      // Check if user is admin
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Admin access required",
+        });
+      }
+
+      const conditions = input.status 
+        ? [eq(advertisingAffiliates.status, input.status)]
+        : [];
+
+      const affiliates = await db
+        .select()
+        .from(advertisingAffiliates)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(advertisingAffiliates.createdAt))
+        .limit(input.limit)
+        .offset(input.offset);
+
+      return affiliates;
+    }),
+
+  /**
+   * Approve affiliate (admin only)
+   */
+  approveAffiliate: protectedProcedure
+    .input(z.object({
+      affiliateId: z.number(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      // Check if user is admin
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Admin access required",
+        });
+      }
+
+      await db
+        .update(advertisingAffiliates)
+        .set({
+          status: "active",
+          approvedAt: new Date(),
+        })
+        .where(eq(advertisingAffiliates.id, input.affiliateId));
+
+      return { success: true };
+    }),
+
+  // ============================================================================
+  // AD CAMPAIGN API
+  // ============================================================================
+
+  /**
+   * Create ad campaign
+   */
+  createCampaign: protectedProcedure
+    .input(z.object({
+      name: z.string().min(1),
+      description: z.string().optional(),
+      budget: z.number().positive(),
+      platforms: z.array(z.enum(["linkedin", "facebook", "tiktok"])),
+      targetAudience: z.object({}).passthrough().optional(),
+      startDate: z.date(),
+      endDate: z.date().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const [campaign] = await db.insert(adCampaigns).values({
+        name: input.name,
+        description: input.description,
+        budget: input.budget.toString(),
+        platforms: JSON.stringify(input.platforms),
+        targetAudience: input.targetAudience ? JSON.stringify(input.targetAudience) : null,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        createdBy: ctx.user.id,
+        status: "draft",
+      });
+
+      return {
+        success: true,
+        campaignId: campaign.insertId,
+      };
+    }),
+
+  /**
+   * Get campaign with ROI metrics
+   */
+  getCampaign: protectedProcedure
+    .input(z.object({
+      campaignId: z.number(),
+    }))
+    .query(async ({ input }) => {
+      const [campaign] = await db
+        .select()
+        .from(adCampaigns)
+        .where(eq(adCampaigns.id, input.campaignId))
+        .limit(1);
+
+      if (!campaign) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Campaign not found",
+        });
+      }
+
+      // Get ads for this campaign
+      const campaignAds = await db
+        .select()
+        .from(ads)
+        .where(eq(ads.campaignId, input.campaignId));
+
+      // Calculate ROI
+      const spent = parseFloat(campaign.spent);
+      const revenue = parseFloat(campaign.revenue);
+      const roi = spent > 0 ? ((revenue - spent) / spent) * 100 : 0;
+
+      return {
+        campaign,
+        ads: campaignAds,
+        metrics: {
+          roi,
+          roas: spent > 0 ? revenue / spent : 0, // Return on Ad Spend
+          totalImpressions: campaignAds.reduce((sum: number, ad: any) => sum + ad.impressions, 0),
+          totalClicks: campaignAds.reduce((sum: number, ad: any) => sum + ad.clicks, 0),
+          totalConversions: campaignAds.reduce((sum: number, ad: any) => sum + ad.conversions, 0),
+        },
+      };
+    }),
+
+  /**
+   * List campaigns
+   */
+  listCampaigns: protectedProcedure
+    .input(z.object({
+      status: z.enum(["draft", "active", "paused", "completed"]).optional(),
+      limit: z.number().default(20),
+      offset: z.number().default(0),
+    }))
+    .query(async ({ input, ctx }) => {
+      const conditions = input.status 
+        ? [eq(adCampaigns.status, input.status)]
+        : [];
+
+      // Non-admin users can only see their own campaigns
+      if (ctx.user.role !== "admin") {
+        conditions.push(eq(adCampaigns.createdBy, ctx.user.id));
+      }
+
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const campaigns = await db
+        .select()
+        .from(adCampaigns)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(adCampaigns.createdAt))
+        .limit(input.limit)
+        .offset(input.offset);
+
+      return campaigns;
+    }),
+
+  /**
+   * Track domain sale for affiliate commission
+   */
+  trackDomainSale: protectedProcedure
+    .input(z.object({
+      domainName: z.string(),
+      price: z.number().positive(),
+      buyerEmail: z.string().email(),
+      buyerName: z.string().optional(),
+      affiliateCode: z.string().optional(),
+      manusOrderId: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      let affiliateId: number | null = null;
+      let affiliateCommission: number | null = null;
+
+      // If affiliate code provided, calculate commission
+      if (input.affiliateCode) {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const [affiliate] = await db
+          .select()
+          .from(advertisingAffiliates)
+          .where(eq(advertisingAffiliates.affiliateCode, input.affiliateCode))
+          .limit(1);
+
+        if (affiliate) {
+          affiliateId = affiliate.id;
+          const rate = parseFloat(affiliate.domainCommissionRate);
+          affiliateCommission = input.price * rate;
+
+          // Create commission record
+          const db2 = await getDb();
+          if (!db2) throw new Error("Database not available");
+          await db2.insert(advertisingAffiliateCommissions).values({
+            affiliateId: affiliate.id,
+            type: "domain_sale",
+            amount: affiliateCommission.toString(),
+            rate: rate.toString(),
+            sourceId: input.manusOrderId || `domain-${Date.now()}`,
+            sourceType: "domain",
+            status: "pending",
+          });
+        }
+      }
+
+      // Record domain sale
+      const db3 = await getDb();
+      if (!db3) throw new Error("Database not available");
+      const [sale] = await db3.insert(domainSales).values({
+        domainName: input.domainName,
+        price: input.price.toString(),
+        buyerEmail: input.buyerEmail,
+        buyerName: input.buyerName,
+        affiliateId,
+        affiliateCommission: affiliateCommission?.toString(),
+        manusOrderId: input.manusOrderId,
+        status: "pending",
+      });
+
+      return {
+        success: true,
+        saleId: sale.insertId,
+        affiliateCommission,
+      };
+    }),
+});
