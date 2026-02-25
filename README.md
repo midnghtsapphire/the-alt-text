@@ -1,355 +1,253 @@
-# The Alt Text - AI-Powered Accessibility Compliance SaaS
+# TheAltText
 
-**Domain:** thealttext.com (available)  
-**Tagline:** Protect Your Business from ADA Lawsuits with Automated WCAG Compliance  
-**Status:** ✅ Design Complete | 🚧 Development Ready  
-**Repository:** https://github.com/midnghtsapphire/the-alt-text
+**AI-Powered Alt Text Generator for ADA/WCAG Compliance**
 
----
-
-## 🎯 Project Overview
-
-**The Alt Text** is a standalone SaaS platform that helps businesses achieve and maintain WCAG 2.1 AA compliance to avoid costly ADA lawsuits. With **4,000+ lawsuits filed in 2024** and settlements ranging from **$10k-$100k**, accessibility compliance is no longer optional.
-
-### Key Innovation: OZ Graphics + Video API
-
-Unlike generic SaaS platforms, The Alt Text includes **automated custom branding** for every client:
-
-- ✅ **Custom 3D logos** with glassmorphism effects
-- ✅ **Personalized landing pages** with client brand colors
-- ✅ **Unique feature icons** matching their aesthetic
-- ✅ **Branded dashboards** and compliance reports
-- ✅ **Marketing materials** (social media graphics, email headers)
-- ✅ **🎬 NEW: Custom explainer videos** - 60-90 second "How It Works" videos with client branding
-
-**All generated automatically in under 5 minutes with zero manual work.**
+A [GlowStarLabs](https://glowstarlabs.com) product by [Audrey Evans](https://meetaudreyevans.com)
 
 ---
 
-## 🚀 Core Features
+## What is TheAltText?
 
-### 1. Automated WCAG Compliance Scanning
-- **Puppeteer-powered testing** - Automated browser testing for all WCAG 2.1 AA criteria
-- **Real-time monitoring** - 24/7 scanning with instant alerts
-- **Detailed violation reports** - Line-by-line code references with fix suggestions
+TheAltText is a production-ready SaaS platform that uses advanced vision AI to automatically generate accurate, contextual, WCAG-compliant alt text for images. It protects businesses from $5K–$75K ADA lawsuits while making the web accessible to everyone.
 
-### 2. AI-Powered Accessibility Fixes
-- **One-click repairs** - Automated alt text generation, color contrast fixes, ARIA labels
-- **Smart suggestions** - AI analyzes context to provide accurate alt text
-- **Bulk operations** - Fix hundreds of images at once
-
-### 3. Lawsuit Database & Risk Assessment
-- **4,000+ lawsuit records** - Comprehensive database of ADA web accessibility lawsuits
-- **Risk scoring** - Calculate your lawsuit risk based on industry, traffic, and violations
-- **ROI calculator** - Show cost of compliance vs. lawsuit settlement
-
-### 4. White-Label Branding (OZ Graphics API)
-- **Custom logos** - 3D glassmorphism logos generated per client
-- **Branded landing pages** - Each client gets their own styled interface
-- **Marketing materials** - Social media graphics, email headers, business cards
-- **Unlimited regenerations** - Clients can regenerate until satisfied
-
-### 5. 🎬 Automated Explainer Videos (OZ Video API)
-- **Custom-branded videos** - 60-90 second "How It Works" videos with client logo and colors
-- **6-scene structure** - Problem → Solution → Scanning → Fixing → Monitoring → CTA
-- **AI narration** - Professional voiceover (male or female voice)
-- **Multiple formats** - Landscape (16:9), square (1:1), vertical (9:16) for all platforms
-- **Instant delivery** - Generated in under 5 minutes
+Over 4,000 ADA web accessibility lawsuits are filed every year. The most common violation is missing alt text on images. TheAltText solves this at scale with one-click AI generation that meets WCAG 2.1 AA standards.
 
 ---
 
-## 💰 Revenue Model
+## Key Features
 
-### Pricing Tiers
-
-| Tier | Price/Month | Domains | Scans | Branding | Videos |
-|------|-------------|---------|-------|----------|--------|
-| **Starter** | $99 | 5 | Weekly | 1 logo set | 1 explainer video |
-| **Professional** | $299 | 25 | Daily | 3 logo sets + unlimited regenerations | 3 explainer videos + 5 custom scenes |
-| **Enterprise** | $999 | Unlimited | Real-time | Unlimited branding + marketing materials | Unlimited videos |
-
-### Revenue Projections
-
-**Monthly Recurring Revenue:**
-- 100 Starter clients × $99 = $9,900
-- 50 Professional clients × $299 = $14,950
-- 20 Enterprise clients × $999 = $19,980
-- **Total MRR**: $44,830/month
-
-**Domain Registration Commission:**
-- 30% commission on Manus domain registrations
-- Average $12/domain × 30% = $3.60 per domain
-- 50 domains/month = $180/month
-
-**OZ Graphics & Video Add-Ons:**
-- Marketing materials: 30 clients × $15 = $450/month
-- Custom videos: 40 clients × $50 = $2,000/month
-- Custom regenerations: 20 clients × $5 = $100/month
-- **Total Add-Ons**: $2,730/month
-
-**Total Monthly Revenue**: $47,740  
-**Annual Revenue**: $572,880
-
-**Profit Margin**: ~95% (after infrastructure and API costs)
+| Feature | Description |
+|---|---|
+| **AI Alt Text Generation** | Vision AI analyzes content, context, text, objects, and scenes to produce accurate descriptions |
+| **WCAG 2.1 Compliance** | Every alt text is scored for confidence and compliance (pass/fail/warning) |
+| **Bulk Processing** | Process up to 100 images per batch with CSV export |
+| **Developer REST API** | Bearer token authentication, rate limiting, usage tracking |
+| **Compliance Dashboard** | Usage stats, compliance score, processing history, admin analytics |
+| **3 Accessibility Modes** | Neurodivergent, ECO CODE, No Blue Light |
+| **16 Industry Pages** | SEO-optimized landing pages for Healthcare, E-commerce, Legal, and more |
+| **Glassmorphism UI** | Dark theme with backdrop blur, gradient accents, responsive design |
+| **Stripe-Ready Billing** | Free, Pro ($29/mo), Enterprise ($99/mo) tiers |
+| **ROI Calculator** | Calculate cost savings vs. manual alt text writing |
 
 ---
 
-## 🎨 Brand Identity
+## Target Market
 
-### Color Palette
-- **Trust Blue** (#2563EB) - Primary brand color, conveys reliability and security
-- **Success Green** (#10B981) - Compliant status, positive feedback
-- **Warning Amber** (#F59E0B) - Warnings and issues requiring attention
-- **Danger Red** (#EF4444) - Critical violations, urgent action needed
+TheAltText serves an underserved blue ocean market:
 
-### Logo Concept: "The Accessibility Shield"
-- **3D glassmorphism shield** with blue-cyan-purple gradient
-- **Chrome '[ALT]' text** with neon glow effects
-- **Floating particles and light rays** for depth and dimension
-- **Multiple variants**: Main logo, icon-only, horizontal layout, favicons
-
-### Typography
-- **Primary**: Inter (modern, clean, highly readable)
-- **Monospace**: JetBrains Mono (for code snippets and technical content)
+- **Small businesses** that need ADA compliance but cannot afford consultants
+- **Web developers** who need to add alt text to thousands of images
+- **Content creators and bloggers** managing image-heavy sites
+- **Government and education sites** (legally required to be accessible)
+- **E-commerce sites** with large product catalogs
+- **Agencies** managing accessibility for multiple clients
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-### Backend
-- **Node.js + TypeScript** - Type-safe server-side code
-- **tRPC** - End-to-end typesafe API
-- **PostgreSQL** - Relational database for compliance data
-- **Drizzle ORM** - Type-safe database queries
-- **Redis** - Caching for scan results and API responses
-
-### Frontend
-- **React 19** - Modern UI framework
-- **Tailwind CSS 4** - Utility-first styling
-- **Vite** - Fast build tool and dev server
-
-### Compliance Testing
-- **Puppeteer** - Automated browser testing for WCAG compliance
-- **axe-core** - Accessibility testing engine
-- **Pa11y** - Additional accessibility testing
-
-### AI & Media Generation
-- **OpenRouter API** - Multi-LLM access for AI features
-- **Manus Image Generation API** - Custom logo and asset generation
-- **Manus Video Generation API** - Custom explainer video creation
-- **Manus Speech API** - AI voiceover for videos
-- **OZ Graphics Service** - Automated branding system
-- **OZ Video Service** - Automated video generation system
-
-### Infrastructure
-- **Manus Hosting** - Built-in hosting with custom domain support
-- **S3 Storage** - Image, video, and asset storage
-- **Manus Domain Registration** - Integrated domain management
-- **FFmpeg** - Video processing and concatenation
+| Layer | Technology |
+|---|---|
+| Frontend | React 19 + TypeScript + Vite 7 + Tailwind CSS 4 + shadcn/ui |
+| Backend | Express 4 + tRPC 11 + Drizzle ORM |
+| Database | MySQL / TiDB |
+| AI | Built-in LLM with vision capabilities (Gemini 2.5 Flash) |
+| Auth | OAuth with JWT sessions |
+| Testing | Vitest (40 tests, 2 test files) |
+| Animations | Framer Motion |
 
 ---
 
-## 📊 Database Schema (12 Tables)
+## Design Philosophy
 
-### Core Tables
-1. **users** - User accounts and authentication
-2. **subscriptions** - Subscription tiers and billing
-3. **domains** - Client websites being monitored
-4. **compliance_scans** - Scan results and history
-5. **violations** - Individual WCAG violations found
-6. **lawsuit_database** - ADA lawsuit records and case details
-7. **roi_calculations** - ROI calculator results
-8. **reports** - Generated compliance reports
-9. **notifications** - Alert system for violations
-10. **audit_logs** - Security and compliance audit trail
+TheAltText features a glassmorphism dark theme with three priority accessibility modes:
 
-### OZ Graphics & Video Tables
-11. **client_branding** - Custom branding assets per client
-12. **video_generations** - Generated explainer videos and custom scenes
+1. **Neurodivergent Mode** — High contrast, reduced motion, Atkinson Hyperlegible font, clear visual hierarchy
+2. **ECO CODE Mode** — Minimal animations, reduced visual complexity, energy-saving design
+3. **No Blue Light Mode** — Warm amber palette, blue light elimination for nighttime use
+
+The interface is WCAG 2.1 AA compliant with full keyboard navigation, screen reader support, and semantic HTML throughout.
 
 ---
 
-## 📈 Market Research
+## Subscription Tiers
 
-### ADA Lawsuit Statistics (2024)
-- **4,000+ lawsuits filed** against businesses for web accessibility violations
-- **Average settlement**: $10,000 - $100,000
-- **98% of websites** have WCAG violations
-- **Top industries targeted**: Retail, healthcare, finance, hospitality, education
-
-### Target Demographics
-
-1. **Business Owners (35-55 years)**
-   - Small to medium businesses with websites
-   - Concerned about legal compliance and lawsuits
-   - Value: Risk mitigation, cost savings
-
-2. **Web Developers (25-40 years)**
-   - Agencies building client websites
-   - Need accessibility testing tools
-   - Value: Automated testing, time savings
-
-3. **Enterprise Compliance Officers (40-60 years)**
-   - Large corporations with compliance requirements
-   - Managing multiple websites and properties
-   - Value: Comprehensive reporting, audit trails
+| Feature | Free | Pro ($29/mo) | Enterprise ($99/mo) |
+|---|---|---|---|
+| Images per month | 50 | 2,000 | 25,000 |
+| Bulk processing | — | Up to 100/batch | Up to 100/batch |
+| API access | — | 5,000 calls/mo | 50,000 calls/mo |
+| WCAG compliance | AA | AA + AAA | AA + AAA + Section 508 |
+| Compliance reports | — | Yes | Yes |
+| Support | Community | Email | Priority + SLA |
+| Rate limit | — | 60 req/min | 120 req/min |
 
 ---
 
-## 🎬 Video Generation Features
+## API Reference
 
-### Automated Explainer Video Structure (6 Scenes, 80 seconds)
+### Authentication
 
-1. **Problem Statement (10s)**
-   - Visual: Website with violations highlighted in red
-   - Narration: "98% of websites have accessibility violations. With 4,000+ ADA lawsuits filed in 2024, is your business at risk?"
+All API endpoints require a Bearer token (API key):
 
-2. **Solution Introduction (10s)**
-   - Visual: Client's custom logo animates in with glassmorphism effects
-   - Narration: "[Client Name] powered by The Alt Text protects your business with automated WCAG compliance."
-
-3. **Automated Scanning (15s)**
-   - Visual: 3D website being scanned with neon beams
-   - Narration: "Our AI-powered scanner analyzes your entire website in minutes, detecting every accessibility violation."
-
-4. **AI-Powered Fixes (15s)**
-   - Visual: Robotic arm/AI assistant fixing violations
-   - Narration: "One-click fixes powered by multi-LLM AI. Generate accurate alt text, fix color contrast, and add ARIA labels instantly."
-
-5. **Real-Time Monitoring (15s)**
-   - Visual: Branded dashboard with compliance score
-   - Narration: "24/7 monitoring keeps you compliant. Get instant alerts when new violations are detected."
-
-6. **Call to Action (15s)**
-   - Visual: Client logo with website URL and ROI calculator
-   - Narration: "Protect your business from $10k-$100k lawsuits. Start your free trial today at [client-domain].com"
-
-### Video Use Cases
-- **Landing page hero** - Autoplay explainer video (30-50% conversion increase)
-- **Social media marketing** - Square and vertical formats for Instagram, TikTok, LinkedIn
-- **Email campaigns** - Embedded videos for higher click-through rates
-- **Sales presentations** - White-label videos for agency pitches
-- **Onboarding tutorials** - Custom tutorial videos for each client
-
----
-
-## 🎯 Competitive Advantages
-
-### 1. **Automated Custom Branding + Video**
-- Only accessibility platform with AI-generated custom branding AND videos
-- White-label ready for agencies and resellers
-- Instant delivery (5 minutes vs. weeks for human designers/editors)
-
-### 2. **Lawsuit Database Integration**
-- Comprehensive database of 4,000+ ADA lawsuits
-- Risk assessment based on real case data
-- Shows clients exactly what's at stake
-
-### 3. **ROI Calculator**
-- Quantifies the cost of compliance vs. lawsuit risk
-- Helps clients justify the investment
-- Increases conversion rates
-
-### 4. **Manus Domain Integration**
-- 30% commission on domain registrations
-- Seamless domain management within platform
-- Additional recurring revenue stream
-
-### 5. **Multi-LLM AI**
-- Uses multiple AI models for best results
-- Accurate alt text generation
-- Context-aware accessibility fixes
-
----
-
-## 📁 Repository Structure
-
+```bash
+curl -X POST https://your-domain.com/api/v1/generate-alt-text \
+  -H "Authorization: Bearer tat_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"image_url": "https://example.com/photo.jpg"}'
 ```
-the-alt-text/
-├── assets/                    # Generated logo and landing page assets
-│   ├── logo-3d-main.png      # Main 3D glassmorphism logo
-│   ├── logo-icon-only.png    # Icon-only variant for favicons
-│   ├── logo-horizontal.png   # Horizontal layout for headers
-│   ├── hero-3d-background.png # Hero section background
-│   ├── compliance-3d-illustration.png # Product illustration
-│   ├── dashboard-mockup.png  # Dashboard UI mockup
-│   ├── feature-icon-scan.png # Automated scanning icon
-│   ├── feature-icon-fix.png  # AI-powered fixes icon
-│   ├── feature-icon-monitor.png # Real-time monitoring icon
-│   └── feature-icon-report.png # Compliance reports icon
-├── docs/                      # Documentation
-│   ├── THE_ALT_TEXT_API_DESIGN.md # API design and database schema
-│   ├── THE_ALT_TEXT_BRAND_IDENTITY.md # Complete brand identity guide
-│   ├── ADA_LAWSUIT_FINDINGS.md # Market research on ADA lawsuits
-│   ├── OZ_GRAPHICS_API_DESIGN.md # OZ Graphics API specification
-│   ├── OZ_GRAPHICS_INTEGRATION_SUMMARY.md # Integration guide and revenue model
-│   └── OZ_VIDEO_GENERATION_API.md # Video generation API specification
-└── README.md                  # This file
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/v1/generate-alt-text` | Generate alt text for a single image |
+| `POST` | `/api/v1/bulk-generate` | Bulk process up to 50 images |
+| `GET` | `/api/v1/health` | Health check (no auth required) |
+
+### Single Image Example
+
+**Request:**
+```json
+{
+  "image_url": "https://example.com/photo.jpg",
+  "page_context": "Product page for outdoor furniture",
+  "surrounding_text": "Our best-selling patio set"
+}
+```
+
+**Response:**
+```json
+{
+  "alt_text": "Wooden patio dining set with four chairs on a stone terrace",
+  "confidence": 94,
+  "image_type": "photo",
+  "wcag_compliance": "pass",
+  "processing_time_ms": 1250,
+  "model": "gemini-2.5-flash"
+}
 ```
 
 ---
 
-## 🚀 Implementation Timeline
+## Industry Landing Pages
 
-### Phase 1: Core Platform (Weeks 1-4)
-- [ ] Set up project structure (Node.js + tRPC + PostgreSQL)
-- [ ] Implement user authentication and subscription management
-- [ ] Build domain management and scanning system
-- [ ] Integrate Puppeteer for WCAG testing
-- [ ] Create violation detection and reporting
+TheAltText includes 16 SEO-optimized landing pages with tailored compliance information:
 
-### Phase 2: AI Features (Weeks 5-6)
-- [ ] Integrate OpenRouter API for multi-LLM access
-- [ ] Build AI-powered alt text generation
-- [ ] Implement automated accessibility fixes
-- [ ] Create smart suggestion system
-
-### Phase 3: OZ Graphics API (Weeks 7-8)
-- [ ] Build logo generation service
-- [ ] Implement landing page asset generation
-- [ ] Create dynamic asset loading system
-- [ ] Add white-label branding functionality
-
-### Phase 4: OZ Video API (Weeks 9-10)
-- [ ] Build video generation service (6-scene structure)
-- [ ] Integrate AI narration (speech generation)
-- [ ] Implement FFmpeg video concatenation
-- [ ] Add multiple format support (landscape, square, vertical)
-
-### Phase 5: Landing Page & Marketing (Weeks 11-12)
-- [ ] Build landing page with hero, features, pricing
-- [ ] Create compliance scanner demo
-- [ ] Implement ROI calculator
-- [ ] Add lawsuit database search
-- [ ] Embed explainer video in hero section
-
-### Phase 6: Testing & Launch (Weeks 13-14)
-- [ ] Write comprehensive vitest tests
-- [ ] Beta testing with 10 clients
-- [ ] Performance optimization
-- [ ] Security audit
-- [ ] Launch to production
+| Industry | Lawsuit Risk | Avg Settlement |
+|---|---|---|
+| Healthcare | High | $25K–$75K |
+| E-commerce | Very High | $15K–$75K |
+| Education | High | $20K–$50K |
+| Legal | Medium-High | $10K–$50K |
+| Financial Services | High | $30K–$75K |
+| Government | Mandatory | N/A |
+| Real Estate | High | $15K–$50K |
+| Restaurants | Medium-High | $5K–$25K |
+| Nonprofit | Medium | $5K–$25K |
+| Travel & Hospitality | High | $20K–$75K |
+| Media & Publishing | Medium-High | $10K–$50K |
+| SaaS & Technology | Medium | $15K–$50K |
+| Insurance | High | $20K–$75K |
+| Automotive | Medium-High | $10K–$50K |
+| Construction | Medium | $5K–$25K |
+| Fitness & Wellness | Medium | $5K–$25K |
 
 ---
 
-## 📞 Next Steps
+## Project Structure
 
-1. **Review all documentation** in `/docs/` directory
-2. **Approve implementation timeline** (14 weeks to MVP)
-3. **Allocate development resources**
-4. **Set up development environment**
-5. **Begin Phase 1 implementation**
+```
+thealttext/
+├── client/                    Frontend (React + TypeScript)
+│   ├── src/
+│   │   ├── pages/             20+ page components
+│   │   ├── components/        Navbar, Footer, UI components
+│   │   ├── contexts/          Theme, Accessibility providers
+│   │   └── data/              Industry landing page data
+│   └── index.html
+├── server/
+│   ├── routers.ts             tRPC procedures (auth, alttext, bulk, apikeys, admin)
+│   ├── apiRoutes.ts           REST API endpoints (/api/v1/*)
+│   ├── db.ts                  Database query helpers
+│   ├── plans.ts               Subscription plan configuration
+│   ├── storage.ts             S3 file storage helpers
+│   └── *.test.ts              Test files (40 tests)
+├── drizzle/                   Database schema & migrations
+├── shared/                    Shared types and constants
+├── CHANGELOG.md               Version history
+├── LICENSE                    Proprietary (All Rights Reserved)
+└── README.md
+```
 
 ---
 
-## 🎉 Key Takeaways
+## Running Tests
 
-1. **The Alt Text solves a real problem** - 4,000+ lawsuits/year, $10k-$100k settlements
-2. **OZ Graphics + Video API is a game-changer** - automated custom branding AND explainer videos for every client
-3. **Highly profitable** - 95% profit margin, $572k annual revenue potential
-4. **White-label ready** - perfect for agencies reselling to their clients
-5. **Fully documented** - complete API design, brand identity, video generation, and implementation plan
+```bash
+pnpm test
+```
+
+40 tests covering: authentication, subscriptions, alt text generation, bulk processing, API key management, admin functions, and industry data validation.
 
 ---
 
-**Ready to build? Let's make the web accessible for everyone! 🌐♿🎬**
+## Pages
+
+The application includes 20+ pages:
+
+| Page | Route | Description |
+|---|---|---|
+| Landing | `/` | Hero, features, social proof, CTA |
+| Pricing | `/pricing` | Plan comparison with upgrade flow |
+| Features | `/features` | 12 feature cards with categories |
+| Dashboard | `/dashboard` | Usage stats, compliance score, history |
+| Generate | `/generate` | Single image alt text generation |
+| Bulk | `/bulk` | Batch processing interface |
+| API Keys | `/api-keys` | Key management (create, revoke) |
+| API Docs | `/api-docs` | Developer documentation with examples |
+| Settings | `/settings` | Account and subscription management |
+| ROI Calculator | `/roi-calculator` | Cost savings calculator |
+| Industries | `/industries` | Industry index page |
+| Industry Detail | `/industries/:slug` | 16 industry-specific pages |
+| Blog | `/blog` | Articles on accessibility |
+| About | `/about` | Company and mission |
+| Contact | `/contact` | Contact form |
+| Changelog | `/changelog` | Version history |
+| Privacy | `/privacy` | Privacy policy |
+| Terms | `/terms` | Terms of service |
+| VPAT | `/vpat` | Accessibility template |
+| Accessibility | `/accessibility-statement` | Accessibility statement |
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+All PRs are reviewed with [CodeRabbit](https://coderabbit.ai/) for automated code review.
+
+---
+
+## License
+
+Copyright (c) 2024-2026 Audrey Evans / GlowStarLabs. All Rights Reserved.
+
+This is proprietary software. See [LICENSE](LICENSE) for details.
+
+---
+
+## Links
+
+- **GlowStarLabs Hub**: [meetaudreyevans.com](https://meetaudreyevans.com)
+- **GlowStarLabs**: [glowstarlabs.com](https://glowstarlabs.com)
+- **WCAG Guidelines**: [w3.org/WAI/WCAG21](https://www.w3.org/WAI/WCAG21/quickref/)
+
+---
+
+*Built with care for accessibility, sustainability, and the open web.*
+*© 2024-2026 Audrey Evans / GlowStarLabs. All rights reserved.*

@@ -4,6 +4,7 @@ import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
+import { apiRouter } from "../apiRoutes";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -33,12 +34,10 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  
-  // Code review webhook endpoint (must be before other routes)
-  const { handleCodeReviewWebhook } = await import("../webhook-code-review");
-  app.post("/api/webhook/code-review", handleCodeReviewWebhook);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // REST API for developers
+  app.use("/api/v1", apiRouter);
   // tRPC API
   app.use(
     "/api/trpc",

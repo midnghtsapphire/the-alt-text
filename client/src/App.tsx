@@ -4,75 +4,48 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import Home from "./pages/Home";
-import Browse from "./pages/Browse";
-import QADetail from "./pages/QADetail";
+import Pricing from "./pages/Pricing";
 import Dashboard from "./pages/Dashboard";
-import Resources from "./pages/Resources";
-import Sources from "./pages/Sources";
-import Bookmarks from "./pages/Bookmarks";
-import Search from "./pages/Search";
-import Nomad from "./pages/Nomad";
-import NomadLocation from "./pages/NomadLocation";
-import NomadCompare from "./pages/NomadCompare";
-import MyProgress from "./pages/MyProgress";
-import Employers from "./pages/Employers";
-import CostEstimator from "./pages/CostEstimator";
+import Generate from "./pages/Generate";
+import Bulk from "./pages/Bulk";
+import ApiKeys from "./pages/ApiKeys";
+import ApiDocs from "./pages/ApiDocs";
+import Settings from "./pages/Settings";
+import RoiCalculator from "./pages/RoiCalculator";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import Changelog from "./pages/Changelog";
-import AdminDashboard from "./pages/AdminDashboard";
-import Suggestions from "./pages/Suggestions";
-import IndustrialLadder from "./pages/IndustrialLadder";
-import TrainingLocator from "./pages/TrainingLocator";
-import TaxHome from "./pages/tax/TaxHome";
-import TaxExpenses from "./pages/TaxExpenses";
-import TaxNotifications from "./pages/TaxNotifications";
-import SecurityTools from "./pages/SecurityTools";
-import SecurityAssessment from "./pages/SecurityAssessment";
-import Partners from "./pages/Partners";
-import CareerHighway from "./pages/CareerHighway";
-import AffiliateCredentials from "./pages/AffiliateCredentials";
-import AffiliateChecklist from "./pages/AffiliateChecklist";
-import OZDashboard from "./pages/OZDashboard";
-import RewardsDashboard from "./pages/RewardsDashboard";
-import AltTextLanding from "./pages/AltTextLanding";
-import FreeImages from "./pages/FreeImages";
+import Features from "./pages/Features";
+import Blog from "./pages/Blog";
+import Industries from "./pages/Industries";
+import IndustryRouter from "./pages/IndustryRouter";
+import { Privacy, Terms, Vpat, AccessibilityStatement } from "./pages/Legal";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={AltTextLanding} />
-      <Route path="/old-home" component={Home} />
-      <Route path="/browse" component={Browse} />
-      <Route path="/browse/:topicSlug" component={Browse} />
-      <Route path="/qa/:slug" component={QADetail} />
+      <Route path="/" component={Home} />
+      <Route path="/pricing" component={Pricing} />
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/resources" component={Resources} />
-      <Route path="/sources" component={Sources} />
-      <Route path="/bookmarks" component={Bookmarks} />
-      <Route path="/search" component={Search} />
-      <Route path="/nomad" component={Nomad} />
-      <Route path="/nomad/compare" component={NomadCompare} />
-      <Route path="/nomad/:slug" component={NomadLocation} />
-      <Route path={'/my-progress'} component={MyProgress} />
-      <Route path={'/employers'} component={Employers} />
-      <Route path={'/cost-estimator'} component={CostEstimator} />
-      <Route path={'/changelog'} component={Changelog} />
-      <Route path={'/admin'} component={AdminDashboard} />
-      <Route path={'/suggestions'} component={Suggestions} />
-      <Route path={'/industrial-ladder'} component={IndustrialLadder} />
-       <Route path={'/training-locator'} component={TrainingLocator} />
-      <Route path={'/tax'} component={TaxHome} />
-      <Route path={'/tax/expenses'} component={TaxExpenses} />
-      <Route path={'/tax/notifications'} component={TaxNotifications} />
-      <Route path={'/security/tools'} component={SecurityTools} />
-      <Route path={'/security/assessment'} component={SecurityAssessment} />
-      <Route path={'/partners'} component={Partners} />
-      <Route path={'/career-highway'} component={CareerHighway} />
-      <Route path="/affiliate-credentials" component={AffiliateCredentials} />
-      <Route path="/affiliate-checklist" component={AffiliateChecklist} />
-      <Route path="/oz-dashboard" component={OZDashboard} />
-      <Route path="/rewards" component={RewardsDashboard} />
-      <Route path="/free-images" component={FreeImages} />
+      <Route path="/generate" component={Generate} />
+      <Route path="/bulk" component={Bulk} />
+      <Route path="/api-keys" component={ApiKeys} />
+      <Route path="/api-docs" component={ApiDocs} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/roi-calculator" component={RoiCalculator} />
+      <Route path="/about" component={About} />
+      <Route path="/contact" component={Contact} />
+      <Route path="/changelog" component={Changelog} />
+      <Route path="/features" component={Features} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/industries" component={Industries} />
+      <Route path="/industries/:slug" component={IndustryRouter} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/vpat" component={Vpat} />
+      <Route path="/accessibility-statement" component={AccessibilityStatement} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -82,11 +55,13 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+      <ThemeProvider defaultTheme="dark">
+        <AccessibilityProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AccessibilityProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

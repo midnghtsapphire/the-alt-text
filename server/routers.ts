@@ -1,457 +1,395 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { headhunterRouter } from "./routers/headhunter";
-import { stripeHeadhunterRouter } from "./routers/stripe-headhunter";
-import { taxRouter } from "./routes/tax";
-import { securityRouter } from "./routers/security";
-import { commerceRouter } from "./routers/commerce";
-import { universalApiRouter } from "./routers/universal-api";
-import { neurodivergentRouter, profileRouter } from "./routers/neurodivergent";
-import { aiRouter } from "./routers/ai";
-import { ozRouter } from "./routers/oz";
-import { rewardsRouter } from "./routers/rewards";
-import { brandingRouter } from "./routers/branding";
-import { affiliateRouter } from "./routers/affiliate";
-import { inventorRouter } from "./routers/inventor";
-import { altTextRouter } from "./routers-alttext";
-import { affiliateLinkRouter } from "./routers-affiliate-links";
-import { ozMarketingRouter } from "./routers-oz-marketing";
-import { socialAutoPosterRouter } from "./routers-social-autoposter";
-import { freeImagesRouter } from "./routers-free-images";
-import { trialRouter } from "./routers-trial";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import * as db from "./db";
+import { TRPCError } from "@trpc/server";
+import { invokeLLM } from "./_core/llm";
+import { nanoid } from "nanoid";
+import { createHash } from "crypto";
+import {
+  getOrCreateSubscription, updateSubscription,
+  createImageAnalysis, updateImageAnalysis, getUserImageAnalyses, getUserStats,
+  createApiKey, getUserApiKeys, deactivateApiKey,
+  createBatchJob, getUserBatchJobs, updateBatchJob,
+  getAdminStats,
+} from "./db";
+import { PLANS } from "./plans";
 
+// ============================================================================
+// HELPER: Hash API key
+// ============================================================================
+function hashApiKey(key: string): string {
+  return createHash("sha256").update(key).digest("hex");
+}
+
+// ============================================================================
+// ALT TEXT GENERATION (OpenRouter via built-in LLM)
+// ============================================================================
+async function generateAltTextFromImage(imageUrl: string, pageContext?: string, surroundingText?: string) {
+  const startTime = Date.now();
+
+  const systemPrompt = `You are an expert accessibility specialist. Generate concise, descriptive alt text for images following WCAG 2.1 AA guidelines.
+
+Rules:
+- Be descriptive but concise (typically 10-125 characters)
+- Describe the content and function of the image
+- Don't start with "Image of" or "Picture of"
+- Include relevant text visible in the image
+- For decorative images, indicate they are decorative
+- Consider the surrounding page context when provided
+- Return a JSON object with: altText, confidence (0-100), imageType (photo|illustration|icon|chart|screenshot|decorative|unknown), wcagCompliance (pass|fail|warning)`;
+
+  const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail: string } }> = [
+    {
+      type: "image_url",
+      image_url: { url: imageUrl, detail: "high" },
+    },
+    {
+      type: "text",
+      text: `Generate alt text for this image.${pageContext ? ` Page context: ${pageContext}` : ""}${surroundingText ? ` Surrounding text: ${surroundingText}` : ""}`,
+    },
+  ];
+
+  const result = await invokeLLM({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent as any },
+    ],
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "alt_text_result",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            altText: { type: "string", description: "The generated alt text" },
+            confidence: { type: "number", description: "Confidence score 0-100" },
+            imageType: { type: "string", enum: ["photo", "illustration", "icon", "chart", "screenshot", "decorative", "unknown"] },
+            wcagCompliance: { type: "string", enum: ["pass", "fail", "warning"] },
+          },
+          required: ["altText", "confidence", "imageType", "wcagCompliance"],
+          additionalProperties: false,
+        },
+      },
+    },
+  });
+
+  const content = result.choices[0]?.message?.content;
+  const parsed = JSON.parse(typeof content === "string" ? content : "{}");
+  const processingTimeMs = Date.now() - startTime;
+  const tokensUsed = result.usage?.total_tokens || 0;
+
+  return {
+    altText: parsed.altText || "Unable to generate alt text",
+    confidence: parsed.confidence || 0,
+    imageType: parsed.imageType || "unknown",
+    wcagCompliance: parsed.wcagCompliance || "warning",
+    processingTimeMs,
+    tokensUsed,
+    modelUsed: result.model || "gemini-2.5-flash",
+  };
+}
+
+// ============================================================================
+// ROUTERS
+// ============================================================================
 export const appRouter = router({
   system: systemRouter,
-  branding: brandingRouter,
-  affiliate: affiliateRouter,
-  inventor: inventorRouter,
-  alttext: altTextRouter,
-  affiliateLinks: affiliateLinkRouter,
-  ozMarketing: ozMarketingRouter,
-  socialAutoPoster: socialAutoPosterRouter,
-  freeImages: freeImagesRouter,
-  trial: trialRouter,
-  
+
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
 
-  topics: router({
-    list: publicProcedure.query(async () => {
-      return await db.getAllTopics();
+  // ============================================================================
+  // SUBSCRIPTION MANAGEMENT
+  // ============================================================================
+  subscription: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      const sub = await getOrCreateSubscription(ctx.user.id);
+      return sub;
     }),
-    bySlug: publicProcedure
-      .input(z.object({ slug: z.string() }))
-      .query(async ({ input }) => {
-        return await db.getTopicBySlug(input.slug);
+
+    getPlans: publicProcedure.query(() => {
+      return PLANS;
+    }),
+
+    upgrade: protectedProcedure
+      .input(z.object({ plan: z.enum(["pro", "enterprise"]) }))
+      .mutation(async ({ input, ctx }) => {
+        const planConfig = PLANS.find(p => p.id === input.plan);
+        if (!planConfig) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid plan" });
+
+        // In production, this would create a Stripe checkout session
+        // For now, update the subscription directly
+        await updateSubscription(ctx.user.id, {
+          plan: input.plan,
+          status: "active",
+          imagesPerMonth: planConfig.imagesPerMonth,
+          bulkUploadsPerMonth: planConfig.bulkUploadsPerMonth,
+          apiCallsPerMonth: planConfig.apiCallsPerMonth,
+        });
+
+        return { success: true, plan: input.plan };
       }),
+
+    cancel: protectedProcedure.mutation(async ({ ctx }) => {
+      await updateSubscription(ctx.user.id, {
+        plan: "free",
+        status: "active",
+        imagesPerMonth: 50,
+        bulkUploadsPerMonth: 0,
+        apiCallsPerMonth: 0,
+        cancelledAt: new Date(),
+      });
+      return { success: true };
+    }),
   }),
 
-  qa: router({
-    list: publicProcedure.query(async () => {
-      return await db.getAllQAItems();
-    }),
-    byTopic: publicProcedure
-      .input(z.object({ topicId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getQAItemsByTopic(input.topicId);
-      }),
-    bySlug: publicProcedure
-      .input(z.object({ slug: z.string() }))
-      .query(async ({ input }) => {
-        const item = await db.getQAItemBySlug(input.slug);
-        if (item) {
-          await db.incrementQAViewCount(item.id);
+  // ============================================================================
+  // AI ALT TEXT GENERATION
+  // ============================================================================
+  alttext: router({
+    generate: protectedProcedure
+      .input(z.object({
+        imageUrl: z.string().url(),
+        pageContext: z.string().optional(),
+        surroundingText: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Check subscription limits
+        const sub = await getOrCreateSubscription(ctx.user.id);
+        if (!sub) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Subscription not found" });
+
+        if (sub.imagesUsedThisMonth >= sub.imagesPerMonth) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Monthly image limit reached. Please upgrade your plan." });
         }
-        return item;
+
+        // Create analysis record
+        const record = await createImageAnalysis({
+          userId: ctx.user.id,
+          imageUrl: input.imageUrl,
+          pageContext: input.pageContext || null,
+          surroundingText: input.surroundingText || null,
+          status: "processing",
+        });
+
+        try {
+          const result = await generateAltTextFromImage(input.imageUrl, input.pageContext, input.surroundingText);
+
+          // Update record with results
+          if (record) {
+            await updateImageAnalysis(record.id, {
+              generatedAltText: result.altText,
+              confidence: result.confidence.toString(),
+              imageType: result.imageType as any,
+              wcagCompliance: result.wcagCompliance as any,
+              processingTimeMs: result.processingTimeMs,
+              tokensUsed: result.tokensUsed,
+              modelUsed: result.modelUsed,
+              status: "completed",
+            });
+          }
+
+          // Increment usage
+          await updateSubscription(ctx.user.id, {
+            imagesUsedThisMonth: sub.imagesUsedThisMonth + 1,
+          });
+
+          return {
+            id: record?.id,
+            altText: result.altText,
+            confidence: result.confidence,
+            imageType: result.imageType,
+            wcagCompliance: result.wcagCompliance,
+            processingTimeMs: result.processingTimeMs,
+          };
+        } catch (error: any) {
+          if (record) {
+            await updateImageAnalysis(record.id, {
+              status: "failed",
+              errorMessage: error.message,
+            });
+          }
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to generate alt text: " + error.message });
+        }
       }),
-    search: publicProcedure
-      .input(z.object({ 
-        query: z.string(),
-        topicId: z.number().optional()
+
+    history: protectedProcedure
+      .input(z.object({ limit: z.number().default(50), offset: z.number().default(0) }))
+      .query(async ({ input, ctx }) => {
+        return getUserImageAnalyses(ctx.user.id, input.limit, input.offset);
+      }),
+
+    stats: protectedProcedure.query(async ({ ctx }) => {
+      const stats = await getUserStats(ctx.user.id);
+      const sub = await getOrCreateSubscription(ctx.user.id);
+      return {
+        ...stats,
+        plan: sub?.plan || "free",
+        imagesPerMonth: sub?.imagesPerMonth || 50,
+        imagesUsedThisMonth: sub?.imagesUsedThisMonth || 0,
+        complianceScore: stats.completedImages > 0
+          ? Math.round((stats.completedImages / Math.max(stats.totalImages, 1)) * 100)
+          : 100,
+      };
+    }),
+  }),
+
+  // ============================================================================
+  // BULK PROCESSING
+  // ============================================================================
+  bulk: router({
+    create: protectedProcedure
+      .input(z.object({
+        imageUrls: z.array(z.string().url()).min(1).max(100),
+        pageContext: z.string().optional(),
       }))
-      .query(async ({ input }) => {
-        return await db.searchQAItems(input.query, input.topicId);
-      }),
-    related: publicProcedure
-      .input(z.object({ qaItemId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getRelatedQuestions(input.qaItemId);
-      }),
-  }),
+      .mutation(async ({ input, ctx }) => {
+        const sub = await getOrCreateSubscription(ctx.user.id);
+        if (!sub) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Subscription not found" });
 
-  resources: router({
-    list: publicProcedure.query(async () => {
-      return await db.getAllResources();
-    }),
-    byCategory: publicProcedure
-      .input(z.object({ category: z.string() }))
-      .query(async ({ input }) => {
-        return await db.getResourcesByCategory(input.category);
+        if (sub.plan === "free") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Bulk processing requires a Pro or Enterprise plan." });
+        }
+
+        const remaining = sub.imagesPerMonth - sub.imagesUsedThisMonth;
+        if (input.imageUrls.length > remaining) {
+          throw new TRPCError({ code: "FORBIDDEN", message: `Only ${remaining} images remaining this month.` });
+        }
+
+        const batchId = nanoid(16);
+        const job = await createBatchJob({
+          userId: ctx.user.id,
+          name: `Batch ${new Date().toISOString().split("T")[0]}`,
+          totalImages: input.imageUrls.length,
+          processedImages: 0,
+          failedImages: 0,
+          status: "processing",
+          startedAt: new Date(),
+        });
+
+        // Process images sequentially (in production, use a job queue)
+        const results: Array<{ imageUrl: string; altText: string; confidence: number; status: string }> = [];
+
+        for (const imageUrl of input.imageUrls) {
+          try {
+            const record = await createImageAnalysis({
+              userId: ctx.user.id,
+              imageUrl,
+              pageContext: input.pageContext || null,
+              status: "processing",
+              batchId,
+            });
+
+            const result = await generateAltTextFromImage(imageUrl, input.pageContext);
+
+            if (record) {
+              await updateImageAnalysis(record.id, {
+                generatedAltText: result.altText,
+                confidence: result.confidence.toString(),
+                imageType: result.imageType as any,
+                wcagCompliance: result.wcagCompliance as any,
+                processingTimeMs: result.processingTimeMs,
+                tokensUsed: result.tokensUsed,
+                modelUsed: result.modelUsed,
+                status: "completed",
+              });
+            }
+
+            results.push({ imageUrl, altText: result.altText, confidence: result.confidence, status: "completed" });
+
+            if (job) {
+              await updateBatchJob(job.id, { processedImages: results.length });
+            }
+          } catch (error: any) {
+            results.push({ imageUrl, altText: "", confidence: 0, status: "failed" });
+            if (job) {
+              await updateBatchJob(job.id, { failedImages: (job as any).failedImages + 1 });
+            }
+          }
+        }
+
+        // Update subscription usage
+        const successCount = results.filter(r => r.status === "completed").length;
+        await updateSubscription(ctx.user.id, {
+          imagesUsedThisMonth: sub.imagesUsedThisMonth + successCount,
+        });
+
+        if (job) {
+          await updateBatchJob(job.id, {
+            status: "completed",
+            completedAt: new Date(),
+            processedImages: successCount,
+            failedImages: results.filter(r => r.status === "failed").length,
+          });
+        }
+
+        return { batchId, results, jobId: job?.id };
       }),
-  }),
 
-  statistics: router({
-    all: publicProcedure.query(async () => {
-      return await db.getAllStatistics();
-    }),
-    byType: publicProcedure
-      .input(z.object({ type: z.string() }))
-      .query(async ({ input }) => {
-        return await db.getStatisticsByType(input.type);
-      }),
-  }),
-
-  sources: router({
-    list: publicProcedure.query(async () => {
-      return await db.getAllSources();
-    }),
-  }),
-
-  bookmarks: router({
     list: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getUserBookmarks(ctx.user.id);
+      return getUserBatchJobs(ctx.user.id);
     }),
-    add: protectedProcedure
-      .input(z.object({ qaItemId: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        await db.addBookmark(ctx.user.id, input.qaItemId);
-        return { success: true };
-      }),
-    remove: protectedProcedure
-      .input(z.object({ qaItemId: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        await db.removeBookmark(ctx.user.id, input.qaItemId);
-        return { success: true };
-      }),
-    isBookmarked: protectedProcedure
-      .input(z.object({ qaItemId: z.number() }))
-      .query(async ({ ctx, input }) => {
-        return await db.isBookmarked(ctx.user.id, input.qaItemId);
-      }),
   }),
 
-  nomad: router({
-    locations: publicProcedure.query(async () => {
-      return await db.getAllLocations();
+  // ============================================================================
+  // API KEY MANAGEMENT
+  // ============================================================================
+  apikeys: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getUserApiKeys(ctx.user.id);
     }),
-    locationBySlug: publicProcedure
-      .input(z.object({ slug: z.string() }))
-      .query(async ({ input }) => {
-        return await db.getLocationBySlug(input.slug);
-      }),
-    relocationSteps: publicProcedure
-      .input(z.object({ 
-        locationId: z.number(),
-        phase: z.enum(["pre_departure", "post_arrival"]).optional()
-      }))
-      .query(async ({ input }) => {
-        return await db.getRelocationStepsByLocation(input.locationId, input.phase);
-      }),
-    trainingPrograms: publicProcedure.query(async () => {
-      return await db.getAllTrainingPrograms();
-    }),
-    calculateJobProbability: publicProcedure
-      .input(z.object({
-        locationId: z.number(),
-        experienceLevel: z.enum(["entry", "mid", "senior", "expert"]),
-        hasApprenticeship: z.boolean(),
-        hasCertification: z.boolean(),
-        hasDegree: z.boolean()
-      }))
-      .query(async ({ input }) => {
-        return await db.getJobProbability(input);
-      }),
-  }),
 
-  progress: router({
-    createPlan: protectedProcedure
-      .input(z.object({
-        locationId: z.number(),
-        targetMoveDate: z.string().optional()
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const targetDate = input.targetMoveDate ? new Date(input.targetMoveDate) : undefined;
-        const planId = await db.createRelocationPlan(ctx.user.id, input.locationId, targetDate);
-        return { planId };
-      }),
-    myPlans: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getUserRelocationPlans(ctx.user.id);
-    }),
-    getPlan: protectedProcedure
-      .input(z.object({ planId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getRelocationPlanById(input.planId);
-      }),
-    updateStatus: protectedProcedure
-      .input(z.object({
-        planId: z.number(),
-        status: z.enum(["planning", "preparing", "relocating", "settled", "cancelled"])
-      }))
-      .mutation(async ({ input }) => {
-        await db.updateRelocationPlanStatus(input.planId, input.status);
-        return { success: true };
-      }),
-    getStepProgress: protectedProcedure
-      .input(z.object({ planId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getStepProgressForPlan(input.planId);
-      }),
-    updateStepProgress: protectedProcedure
-      .input(z.object({
-        relocationPlanId: z.number(),
-        stepId: z.number(),
-        isCompleted: z.boolean().optional(),
-        completedAt: z.string().nullable().optional(),
-        dueDate: z.string().nullable().optional(),
-        notes: z.string().nullable().optional()
-      }))
-      .mutation(async ({ input }) => {
-        const data: any = {
-          relocationPlanId: input.relocationPlanId,
-          stepId: input.stepId
-        };
-        if (input.isCompleted !== undefined) data.isCompleted = input.isCompleted;
-        if (input.completedAt !== undefined) data.completedAt = input.completedAt ? new Date(input.completedAt) : null;
-        if (input.dueDate !== undefined) data.dueDate = input.dueDate ? new Date(input.dueDate) : null;
-        if (input.notes !== undefined) data.notes = input.notes;
-        
-        const progressId = await db.upsertStepProgress(data);
-        return { progressId };
-      }),
-    addDocument: protectedProcedure
-      .input(z.object({
-        stepProgressId: z.number(),
-        fileName: z.string(),
-        fileUrl: z.string(),
-        fileKey: z.string(),
-        fileSize: z.number().optional(),
-        mimeType: z.string().optional()
-      }))
-      .mutation(async ({ input }) => {
-        const documentId = await db.addStepDocument(input);
-        return { documentId };
-      }),
-    getDocuments: protectedProcedure
-      .input(z.object({ stepProgressId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getDocumentsForStepProgress(input.stepProgressId);
-      }),
-    deleteDocument: protectedProcedure
-      .input(z.object({ documentId: z.number() }))
-      .mutation(async ({ input }) => {
-        await db.deleteStepDocument(input.documentId);
-        return { success: true };
-      }),
-  }),
-  employers: router({
-    list: publicProcedure.query(async () => {
-      return await db.getAllEmployers();
-    }),
-    byLocation: publicProcedure
-      .input(z.object({ locationId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getEmployersByLocation(input.locationId);
-      }),
-    byId: publicProcedure
-      .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getEmployerById(input.id);
-      }),
-  }),
-  jobs: router({
-    list: publicProcedure.query(async () => {
-      return await db.getAllJobOpenings();
-    }),
-    byLocation: publicProcedure
-      .input(z.object({ locationId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getJobOpeningsByLocation(input.locationId);
-      }),
-    byEmployer: publicProcedure
-      .input(z.object({ employerId: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getJobOpeningsByEmployer(input.employerId);
-      }),
-    search: publicProcedure
-      .input(z.object({
-        locationId: z.number().optional(),
-        experienceLevel: z.string().optional(),
-        jobType: z.string().optional(),
-        searchTerm: z.string().optional(),
-      }))
-      .query(async ({ input }) => {
-        return await db.searchJobOpenings(input);
-      }),
-  }),
-  share: router({
-    generateShareLink: protectedProcedure
-      .input(z.object({ planId: z.number() }))
+    create: protectedProcedure
+      .input(z.object({ name: z.string().min(1).max(100) }))
       .mutation(async ({ input, ctx }) => {
-        // Generate a unique share token
-        const shareToken = `${ctx.user.id}-${input.planId}-${Date.now()}`;
-        const shareUrl = `/share/progress/${shareToken}`;
-        return { shareUrl, shareToken };
+        const sub = await getOrCreateSubscription(ctx.user.id);
+        if (!sub || sub.plan === "free") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "API access requires a Pro or Enterprise plan." });
+        }
+
+        const rawKey = `tat_live_${nanoid(32)}`;
+        const keyHash = hashApiKey(rawKey);
+        const keyPrefix = rawKey.substring(0, 12);
+
+        const planConfig = PLANS.find(p => p.id === sub.plan);
+
+        await createApiKey({
+          userId: ctx.user.id,
+          name: input.name,
+          keyHash,
+          keyPrefix,
+          rateLimit: sub.plan === "enterprise" ? 120 : 60,
+          monthlyLimit: planConfig?.apiCallsPerMonth || 1000,
+        });
+
+        // Return the raw key only once
+        return { key: rawKey, prefix: keyPrefix };
       }),
-    getSharedProgress: publicProcedure
-      .input(z.object({ shareToken: z.string() }))
-      .query(async ({ input }) => {
-        // Parse share token to get planId
-        const parts = input.shareToken.split('-');
-        if (parts.length < 2) return null;
-        
-        const planId = parseInt(parts[1]!);
-        const plan = await db.getRelocationPlanById(planId);
-        if (!plan) return null;
-        
-        const progress = await db.getStepProgressForPlan(planId);
-        const allLocations = await db.getAllLocations();
-        const location = allLocations.find(l => l.id === plan.locationId);
-        
-        return { plan, progress, location };
+
+    revoke: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await deactivateApiKey(input.id, ctx.user.id);
+        return { success: true };
       }),
   }),
 
-  changelog: router({
-    list: publicProcedure
-      .input(z.object({ 
-        color: z.enum(["red", "blue", "yellow", "green"]).optional() 
-      }))
-      .query(async ({ input }) => {
-        return await db.getContentVersions(input.color);
-      }),
-    byContent: publicProcedure
-      .input(z.object({ 
-        contentType: z.enum(["qa", "statistic", "resource", "location"]),
-        contentId: z.number()
-      }))
-      .query(async ({ input }) => {
-        return await db.getContentVersionsByContent(input.contentType, input.contentId);
-      }),
-  }),
-
+  // ============================================================================
+  // ADMIN DASHBOARD
+  // ============================================================================
   admin: router({
-    verificationStatus: publicProcedure.query(async () => {
-      return await db.getVerificationStatus();
-    }),
-    linkHealth: publicProcedure.query(async () => {
-      return await db.getLinkHealthStatus();
-    }),
-    updateFactVerification: publicProcedure
-      .input(z.object({
-        contentType: z.enum(["qa", "statistic", "resource", "location"]),
-        contentId: z.number(),
-        status: z.enum(["pending", "verified", "needs_review", "failed"]),
-        notes: z.string().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.updateFactVerification(
-          input.contentType,
-          input.contentId,
-          input.status,
-          input.notes
-        );
-      }),
-  }),
-
-  suggestions: router({
-    list: publicProcedure
-      .input(z.object({
-        status: z.enum(["new", "reviewing", "planned", "in_progress", "completed", "declined"]).optional(),
-      }))
-      .query(async ({ input }) => {
-        return await db.getFeatureSuggestions(input.status);
-      }),
-    create: publicProcedure
-      .input(z.object({
-        name: z.string().optional(),
-        email: z.string().email().optional(),
-        suggestionType: z.enum(["feature", "bug", "improvement", "content"]),
-        title: z.string().min(5).max(500),
-        description: z.string().min(10),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        return await db.createFeatureSuggestion({
-          ...input,
-          userId: ctx.user?.id,
-        });
-      }),
-    upvote: publicProcedure
-      .input(z.object({ suggestionId: z.number() }))
-      .mutation(async ({ input }) => {
-        return await db.upvoteFeatureSuggestion(input.suggestionId);
-      }),
-  }),
-
-  // AI Career Assessment Module
-  assessment: router({
-    create: publicProcedure
-      .input(z.object({
-        currentRole: z.string(),
-        currentIndustry: z.string(),
-        yearsExperience: z.number(),
-        educationLevel: z.string(),
-        skills: z.array(z.string()),
-        careerGoals: z.string(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const assessmentId = await db.createCareerAssessment({
-          userId: ctx.user?.id,
-          ...input,
-        });
-        return { id: assessmentId };
-      }),
-    getById: publicProcedure
-      .input(z.object({ id: z.number() }))
-      .query(async ({ input }) => {
-        return await db.getCareerAssessmentById(input.id);
-      }),
-    myAssessments: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getUserCareerAssessments(ctx.user.id);
+    stats: adminProcedure.query(async () => {
+      return getAdminStats();
     }),
   }),
-
-  // Headhunter/Recruitment Module
-  headhunter: headhunterRouter,
-  
-  // Stripe Payment Integration for Headhunter
-  stripeHeadhunter: stripeHeadhunterRouter,
-  
-  // Tax Module - Expense Tracking & 1099 Generation
-  tax: taxRouter,
-  
-  // Security Module - Tools, Training, Assessments & Affiliate Tracking
-  security: securityRouter,
-  
-  // Commerce Module - Shop, Orders, Subscriptions (Module 05)
-  commerce: commerceRouter,
-  
-  // Universal API - 50 API modules with pay-per-module pricing
-  api: universalApiRouter,
-  
-  // Neurodivergent UI Adapter (Module 02)
-  neurodivergent: neurodivergentRouter,
-  profile: profileRouter,
-  
-  // AI-powered features (career assessment, recommendations)
-  ai: aiRouter,
-  
-  // OZ Module - Multi-Agent Research & Analysis System
-  oz: ozRouter,
-  
-  // Rewards & Credits System - Earn credits for testing, contributions, referrals
-  rewards: rewardsRouter,
 });
 
 export type AppRouter = typeof appRouter;
