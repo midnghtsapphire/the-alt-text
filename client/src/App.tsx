@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, Router as WouterRouter } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
@@ -22,8 +22,7 @@ import Blog from "./pages/Blog";
 import Industries from "./pages/Industries";
 import IndustryRouter from "./pages/IndustryRouter";
 import { Privacy, Terms, Vpat, AccessibilityStatement } from "./pages/Legal";
-
-function Router() {
+function AppRouter() {
   return (
     <Switch>
       <Route path="/" component={Home} />
@@ -51,7 +50,6 @@ function Router() {
     </Switch>
   );
 }
-
 function App() {
   return (
     <ErrorBoundary>
@@ -59,12 +57,13 @@ function App() {
         <AccessibilityProvider>
           <TooltipProvider>
             <Toaster />
-            <Router />
+            <WouterRouter base="/thealttext">
+              <AppRouter />
+            </WouterRouter>
           </TooltipProvider>
         </AccessibilityProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
 }
-
 export default App;
