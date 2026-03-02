@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API health check endpoint at `/api/v1/health`
 
 #### User Management & Authentication
-- OAuth-based authentication via Manus platform
+- OAuth-based authentication
 - Role-based access control (user, admin)
 - User settings page with subscription management
 
@@ -98,5 +98,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend**: Express 4, tRPC 11, Drizzle ORM
 - **Database**: MySQL/TiDB via Drizzle
 - **AI**: Built-in LLM (vision-capable) for image analysis
-- **Auth**: Manus OAuth with JWT sessions
+- **Auth**: OAuth with JWT sessions
 - **Testing**: Vitest

@@ -131,7 +131,7 @@ function Hero({ clientId }: { clientId: string }) {
 
 ### Cost Analysis
 
-- **Cost per image generation**: $0.10 (OpenRouter/Manus API)
+- **Cost per image generation**: $0.10 (OpenRouter API)
 - **Logo set (5 images)**: $0.50 cost, **$5 sell price** = **10x markup**
 - **Landing page assets (8 images)**: $0.80 cost, **$10 sell price** = **12.5x markup**
 - **Marketing materials (10 images)**: $1.00 cost, **$15 sell price** = **15x markup**

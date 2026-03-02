@@ -14,7 +14,7 @@
 3. **Boost SEO** - 20-30% traffic increase from accessibility improvements
 4. **Reduce CO2** - Optimized images = lower bandwidth = environmental impact
 
-**Revenue Model:** SaaS subscription ($99-$999/month) + Manus domain sales
+**Revenue Model:** SaaS subscription ($99-$999/month) + domain sales
 
 ---
 
@@ -27,7 +27,7 @@
 - Most businesses don't know they're at risk
 
 ### Solution
-Automated compliance checking + remediation suggestions + lawsuit risk scoring + ROI calculator + domain registration (via Manus)
+Automated compliance checking + remediation suggestions + lawsuit risk scoring + ROI calculator + domain registration (via platform)
 
 ### Target Market
 1. **High-Risk Industries:**
@@ -159,25 +159,25 @@ Automated compliance checking + remediation suggestions + lawsuit risk scoring +
 - **Target:** Large companies, enterprise
 
 #### Add-Ons
-- **Domain Registration** (via Manus): $10-$50/year (100% revenue)
+- **Domain Registration** (via platform): $10-$50/year (100% revenue)
 - **Manual Audit** (human review): $500-$2,000 per audit
 - **Legal Consultation** (partner with accessibility lawyers): $300/hour (20% commission)
 - **Training** (WCAG compliance training): $1,000-$5,000 per session
 
-### 9. Manus Domain Integration
+### 9. Domain Integration
 
 **Seamless Workflow:**
 1. User scans existing website → finds compliance issues
 2. System suggests: "Start fresh with a compliant domain"
-3. Check domain availability (via Manus API)
-4. Purchase domain directly through Manus
+3. Check domain availability (via platform API)
+4. Purchase domain directly through platform
 5. Auto-configure domain for compliant website
 6. Deploy compliant site to new domain
-7. Bind custom domain to Manus webapp
+7. Bind custom domain to webapp
 
 **Revenue Opportunity:**
 - Domain sales: $10-$50 per domain (100% revenue, no affiliates)
-- Hosting upsell: Manus hosting for compliant sites
+- Hosting upsell: Platform hosting for compliant sites
 - Ongoing compliance monitoring subscription
 
 ---
@@ -313,7 +313,7 @@ Automated compliance checking + remediation suggestions + lawsuit risk scoring +
 - domain_name
 - registration_date
 - expiration_date
-- manus_order_id
+- platform_order_id
 - price_paid
 - auto_renew (boolean)
 - status (active, expired, cancelled)
@@ -392,7 +392,7 @@ Automated compliance checking + remediation suggestions + lawsuit risk scoring +
 ### Phase 2: Growth (Months 4-6)
 - Add lawsuit database
 - Launch Enterprise plan
-- Integrate Manus domain registration
+- Integrate domain registration
 - Target: 500 paying customers
 - Expand: All 50 states
 
@@ -447,7 +447,7 @@ Automated compliance checking + remediation suggestions + lawsuit risk scoring +
 4. [ ] Build compliance checker API
 5. [ ] Integrate OZ for AI remediation
 6. [ ] Build ROI calculator
-7. [ ] Integrate Manus domain system
+7. [ ] Integrate domain system
 8. [ ] Create dashboard UI
 9. [ ] Launch MVP
 

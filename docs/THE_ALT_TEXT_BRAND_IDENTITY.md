@@ -403,7 +403,7 @@ shadow: 0 1px 3px rgba(0,0,0,0.1)
 - WCAG 2.1 AA compliance checking
 - Lawsuit database (4,000+ cases)
 - ROI calculator
-- Domain registration (Manus integration)
+- Domain registration
 
 **6. Pricing Table**
 - Starter: $99/month

@@ -309,7 +309,7 @@ export async function generateLandingAssets(params: {
 - **Enterprise ($999/month)**: Unlimited logo sets + landing page assets + marketing materials + priority generation
 
 ### Revenue Potential
-- **Cost per generation**: ~$0.10 per image (OpenRouter/Manus API)
+- **Cost per generation**: ~$0.10 per image (OpenRouter API)
 - **Markup**: 50x-100x (selling $5 logo set costs $0.50 to generate)
 - **Monthly recurring revenue**: Built into subscription tiers
 - **Add-on revenue**: Custom marketing materials ($15-$50 per set)

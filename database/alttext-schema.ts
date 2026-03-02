@@ -130,14 +130,14 @@ export const imageOptimizations = sqliteTable('image_optimizations', {
   optimizationDate: integer('optimization_date', { mode: 'timestamp' }).notNull(),
 });
 
-// 9. Domain Registrations (Manus Integration)
+// 9. Domain Registrations
 export const domainRegistrations = sqliteTable('domain_registrations', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   userId: text('user_id').notNull(),
   domainName: text('domain_name').notNull(),
   registrationDate: integer('registration_date', { mode: 'timestamp' }).notNull(),
   expirationDate: integer('expiration_date', { mode: 'timestamp' }).notNull(),
-  manusOrderId: text('manus_order_id'), // Reference to Manus order
+  platformOrderId: text('platform_order_id'), // Reference to platform order
   pricePaid: real('price_paid').notNull(), // in USD
   autoRenew: integer('auto_renew', { mode: 'boolean' }).notNull(),
   status: text('status').notNull(), // 'active', 'expired', 'cancelled'

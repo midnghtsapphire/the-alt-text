@@ -133,7 +133,7 @@
    - Website size (pages)
    - Storage/network size
    - Industry risk level
-7. **Integrate with Manus domain system**
+7. **Integrate domain system**
 
 ---
 
